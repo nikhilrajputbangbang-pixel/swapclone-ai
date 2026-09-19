@@ -1,0 +1,3 @@
+# After AdSense gives you your publisher ID, create public/ads.txt with the line below.
+# Replace the placeholder with your real publisher ID.
+# google.com, pub-REPLACE_WITH_YOUR_PUBLISHER_ID, DIRECT, f08c47fec0942fa0
