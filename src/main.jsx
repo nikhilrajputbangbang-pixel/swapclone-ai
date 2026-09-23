@@ -3,14 +3,142 @@ import { createRoot } from "react-dom/client";
 import { categories } from "./data";
 import "./styles.css";
 
+/* =========================================================
+   ENVIRONMENT VARIABLES
+========================================================= */
+
 const ADSENSE_CLIENT = import.meta.env.VITE_ADSENSE_CLIENT || "";
 const ADSENSE_SLOT_TOP = import.meta.env.VITE_ADSENSE_SLOT_TOP || "";
 const ADSENSE_SLOT_MID = import.meta.env.VITE_ADSENSE_SLOT_MID || "";
-const ADSENSE_SLOT_BOTTOM = import.meta.env.VITE_ADSENSE_SLOT_BOTTOM || "";
+const ADSENSE_SLOT_BOTTOM =
+  import.meta.env.VITE_ADSENSE_SLOT_BOTTOM || "";
+
 const GA_ID = import.meta.env.VITE_GA_ID || "";
+
+/* =========================================================
+   HILLTOPADS
+   Zone: 7452441
+   Format: MultiTag Banner 300x250
+
+   Same approved HilltopAds zone is placed in 3 positions.
+========================================================= */
+
+const HILLTOP_SCRIPT =
+  "(function(tnid){var d=document,s=d.createElement('script'),l=d.currentScript||d.scripts[d.scripts.length-1];s.settings=tnid||{};s.src='//peacefulbicycle.com/bOX/V.sQd/GclE0-YDWOcH/re/mN9/u_ZwUjlGk_PGTScm0HNGTFI/0dNdDLEwtGNCzAQ/1OM/jxQM0ZNoQv';s.async=true;s.referrerPolicy='no-referrer-when-downgrade';l.parentNode.insertBefore(s,l);})({})";
+
+
+function HilltopAd({ position }) {
+  const id = `hilltop-ad-7452441-${position}`;
+
+  useEffect(() => {
+    const container = document.getElementById(id);
+
+    if (!container) return;
+
+    /* Don't load twice */
+    if (container.dataset.loaded === "true") {
+      return;
+    }
+
+    container.dataset.loaded = "true";
+
+    const script = document.createElement("script");
+
+    script.async = true;
+    script.referrerPolicy = "no-referrer-when-downgrade";
+
+    script.text = HILLTOP_SCRIPT;
+
+    container.appendChild(script);
+
+    return () => {
+      /*
+        Don't remove the container aggressively because
+        Hilltop's external script may still be working.
+      */
+    };
+  }, [id]);
+
+  return (
+    <div
+      id={id}
+      className="hilltop-ad-slot"
+      data-position={position}
+      aria-label="Advertisement"
+    />
+  );
+}
+
+/* =========================================================
+   ADSENSE COMPONENT
+========================================================= */
+
+function AdSlot({ slot, label = "Advertisement" }) {
+  const enabled = Boolean(ADSENSE_CLIENT && slot);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    try {
+      window.adsbygoogle = window.adsbygoogle || [];
+
+      const ads = document.querySelectorAll(
+        `ins.adsbygoogle[data-ad-slot="${slot}"]`
+      );
+
+      ads.forEach((ad) => {
+        if (!ad.getAttribute("data-adsbygoogle-status")) {
+          window.adsbygoogle.push({});
+        }
+      });
+    } catch (error) {
+      console.warn("AdSense error:", error);
+    }
+  }, [enabled, slot]);
+
+  return (
+    <div
+      className={`ad-slot ${
+        enabled ? "ad-live" : "ad-ready"
+      }`}
+      aria-label={label}
+    >
+      {enabled ? (
+        <ins
+          className="adsbygoogle"
+          style={{
+            display: "block",
+            minHeight: "100px",
+          }}
+          data-ad-client={ADSENSE_CLIENT}
+          data-ad-slot={slot}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
+      ) : (
+        <>
+          <span>{label}</span>
+
+          <small>
+            Ad placement ready — connect your AdSense publisher ID
+            and slot in .env
+          </small>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   LOGO
+========================================================= */
 
 const logoUrl = (domain) =>
   `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+
+/* =========================================================
+   FEATURED SWAPS
+========================================================= */
 
 const featuredSwaps = [
   {
@@ -50,6 +178,10 @@ const featuredSwaps = [
     categoryId: "video-editing",
   },
 ];
+
+/* =========================================================
+   ICONS
+========================================================= */
 
 function Icon({ name }) {
   const icons = {
@@ -97,14 +229,22 @@ function Icon({ name }) {
   return <span className="svg-icon">{icons[name]}</span>;
 }
 
+/* =========================================================
+   TOOL LOGO
+========================================================= */
+
 function ToolLogo({ tool }) {
   const [failed, setFailed] = useState(false);
 
-  return failed ? (
-    <div className="tool-logo fallback">
-      {tool.name.slice(0, 2).toUpperCase()}
-    </div>
-  ) : (
+  if (failed) {
+    return (
+      <div className="tool-logo fallback">
+        {tool.name.slice(0, 2).toUpperCase()}
+      </div>
+    );
+  }
+
+  return (
     <div className="tool-logo">
       <img
         src={logoUrl(tool.domain)}
@@ -116,89 +256,9 @@ function ToolLogo({ tool }) {
   );
 }
 
-function AdSlot({ slot, label = "Advertisement" }) {
-  const enabled = ADSENSE_CLIENT && slot;
-
-  return (
-    <div
-      className={`ad-slot ${enabled ? "ad-live" : "ad-ready"}`}
-      aria-label={label}
-    >
-      {enabled ? (
-        <ins
-          className="adsbygoogle"
-          style={{ display: "block" }}
-          data-ad-client={ADSENSE_CLIENT}
-          data-ad-slot={slot}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      ) : (
-        <>
-          <span>{label}</span>
-          <small>
-            Ad placement ready — connect your AdSense publisher ID and slot in
-            .env
-          </small>
-        </>
-      )}
-    </div>
-  );
-}
-
-/*
-  HilltopAds Zone #7452441
-  Format: MultiTag Banner 300x250
-
-  IMPORTANT:
-  This uses the latest HilltopAds script supplied by the user.
-*/
-function HilltopAd() {
-  useEffect(() => {
-    const container = document.getElementById("hilltop-ad-7452441");
-
-    if (!container) return;
-
-    // Prevent duplicate scripts when React re-renders.
-    container.innerHTML = "";
-
-    const script = document.createElement("script");
-
-    script.async = true;
-    script.referrerPolicy = "no-referrer-when-downgrade";
-
-    script.text = `
-      (function(tnid){
-        var d = document,
-            s = d.createElement('script'),
-            l = d.currentScript || d.scripts[d.scripts.length - 1];
-
-        s.settings = tnid || {};
-
-        s.src = "//peacefulbicycle.com/bOX/V.sQd/GclE0-YDWOcH/re/mN9/u_ZwUjlGk_PGTScm0HNGTFI/0dNdDLEwtGNCzAQ/1OM/jxQM0ZNoQv";
-
-        s.async = true;
-        s.referrerPolicy = 'no-referrer-when-downgrade';
-
-        l.parentNode.insertBefore(s, l);
-      })({})
-    `;
-
-    container.appendChild(script);
-
-    return () => {
-      container.innerHTML = "";
-    };
-  }, []);
-
-  return (
-    <div
-      id="hilltop-ad-7452441"
-      className="hilltop-ad-slot"
-      aria-label="Advertisement"
-    />
-  );
-}
+/* =========================================================
+   TOOL CARD
+========================================================= */
 
 function ToolCard({ tool, kind, onOpen }) {
   const isFree = kind === "free";
@@ -215,6 +275,7 @@ function ToolCard({ tool, kind, onOpen }) {
 
           <div className="tool-meta">
             <h4>{tool.name}</h4>
+
             <p>{tool.description}</p>
           </div>
         </div>
@@ -230,7 +291,9 @@ function ToolCard({ tool, kind, onOpen }) {
                   : ""
               }`}
             >
-              <span className="status-dot" /> {tool.status}
+              <span className="status-dot" />
+
+              {tool.status}
             </span>
           ) : (
             <span className="price">{tool.pricing}</span>
@@ -250,60 +313,75 @@ function ToolCard({ tool, kind, onOpen }) {
         onClick={() =>
           window.dispatchEvent(
             new CustomEvent("swapclone-tool-click", {
-              detail: { name: tool.name, kind },
+              detail: {
+                name: tool.name,
+                kind,
+              },
             })
           )
         }
       >
-        {isFree ? "Use Free" : "Visit"} <Icon name="external" />
+        {isFree ? "Use Free" : "Visit"}
+
+        <Icon name="external" />
       </a>
     </article>
   );
 }
+
+/* =========================================================
+   LEGAL PAGE
+========================================================= */
 
 function LegalPage({ type, onBack }) {
   const pages = {
     privacy: {
       title: "Privacy Policy",
       kicker: "YOUR PRIVACY MATTERS",
+
       body: (
         <>
           <p>
-            SwapClone AI is a discovery directory. We do not require an account
-            to browse the directory or open listed tools.
+            SwapClone AI is a discovery directory. We do not require
+            an account to browse the directory or open listed tools.
           </p>
 
           <h3>Information we may collect</h3>
 
           <p>
-            Basic technical information may be processed by our hosting,
-            analytics, security and advertising providers. This can include
-            pages viewed, approximate device/browser information, referral
-            source and aggregated usage information.
+            Basic technical information may be processed by our
+            hosting, analytics, security and advertising providers.
+            This can include pages viewed, approximate device/browser
+            information, referral source and aggregated usage
+            information.
           </p>
 
           <h3>Analytics and advertising</h3>
 
           <p>
-            If analytics or advertising services are enabled, those providers
-            may use cookies or similar technologies according to their own
-            policies. Advertising may be personalized where permitted and
-            consent requirements apply.
+            If analytics or advertising services are enabled, those
+            providers may use cookies or similar technologies
+            according to their own policies. Advertising may be
+            personalized where permitted and consent requirements
+            apply.
           </p>
 
           <h3>External websites</h3>
 
           <p>
-            Tool cards link directly to third-party websites. SwapClone AI does
-            not control those sites, their privacy practices, pricing,
-            availability or content. Review their policies before using them.
+            Tool cards link directly to third-party websites.
+            SwapClone AI does not control those sites, their privacy
+            practices, pricing, availability or content.
           </p>
 
           <h3>Contact</h3>
 
           <p>
             For privacy questions, email{" "}
-            <a href="mailto:hello@swapclone.ai">hello@swapclone.ai</a>.
+            <a href="mailto:hello@swapclone.ai">
+              hello@swapclone.ai
+            </a>
+            .
           </p>
         </>
       ),
@@ -312,43 +390,46 @@ function LegalPage({ type, onBack }) {
     terms: {
       title: "Terms of Use",
       kicker: "SIMPLE, CLEAR, TRANSPARENT",
+
       body: (
         <>
           <p>
-            SwapClone AI provides information intended to help visitors
-            discover AI tools. The directory is provided for general
-            informational purposes and does not guarantee that a tool is free,
-            available, secure, accurate or suitable for a particular purpose.
+            SwapClone AI provides information intended to help
+            visitors discover AI tools. The directory is provided
+            for general informational purposes.
           </p>
 
           <h3>Pricing and availability</h3>
 
           <p>
-            Prices, free tiers, limits, features and terms can change. Always
-            confirm current details on the official tool website before making a
-            purchase or relying on a feature.
+            Prices, free tiers, limits, features and terms can
+            change. Always confirm current details on the official
+            tool website.
           </p>
 
           <h3>Third-party links</h3>
 
           <p>
-            External links lead to third-party services. SwapClone AI is not
-            responsible for third-party websites, products, content, outages or
-            policies.
+            External links lead to third-party services. SwapClone
+            AI is not responsible for third-party websites,
+            products, content, outages or policies.
           </p>
 
           <h3>Changes</h3>
 
           <p>
-            We may update the directory, remove outdated entries or change
-            these terms as the website develops.
+            We may update the directory, remove outdated entries or
+            change these terms as the website develops.
           </p>
 
           <h3>Contact</h3>
 
           <p>
             Questions or corrections can be sent to{" "}
-            <a href="mailto:hello@swapclone.ai">hello@swapclone.ai</a>.
+            <a href="mailto:hello@swapclone.ai">
+              hello@swapclone.ai
+            </a>
+            .
           </p>
         </>
       ),
@@ -372,6 +453,10 @@ function LegalPage({ type, onBack }) {
   );
 }
 
+/* =========================================================
+   MAIN APP
+========================================================= */
+
 function App() {
   const [active, setActive] = useState("all");
   const [filter, setFilter] = useState("all");
@@ -380,51 +465,68 @@ function App() {
   const [selectedTool, setSelectedTool] = useState(null);
   const [page, setPage] = useState(null);
 
+  /* =======================================================
+     ADSENSE + GOOGLE ANALYTICS
+  ======================================================= */
+
   useEffect(() => {
-    if (!ADSENSE_CLIENT) return;
+    /* ---------------- ADSENSE ---------------- */
 
-    const scriptId = "swapclone-adsense";
+    if (ADSENSE_CLIENT) {
+      const scriptId = "swapclone-adsense";
 
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement("script");
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
 
-      script.id = scriptId;
-      script.async = true;
-      script.crossOrigin = "anonymous";
-      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+        script.id = scriptId;
+        script.async = true;
+        script.crossOrigin = "anonymous";
 
-      document.head.appendChild(script);
+        script.src =
+          `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+
+        document.head.appendChild(script);
+      }
     }
 
-    try {
-      window.adsbygoogle = window.adsbygoogle || [];
-
-      document
-        .querySelectorAll("ins.adsbygoogle")
-        .forEach(() => window.adsbygoogle.push({}));
-    } catch {}
+    /* ---------------- GOOGLE ANALYTICS ---------------- */
 
     if (GA_ID && !document.getElementById("swapclone-ga")) {
       const s1 = document.createElement("script");
 
       s1.id = "swapclone-ga";
       s1.async = true;
-      s1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+
+      s1.src =
+        `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
 
       document.head.appendChild(s1);
 
       const s2 = document.createElement("script");
 
+      s2.id = "swapclone-ga-config";
+
       s2.textContent = `
-        window.dataLayer=window.dataLayer||[];
-        function gtag(){dataLayer.push(arguments)};
-        gtag("js",new Date());
-        gtag("config","${GA_ID}",{anonymize_ip:true});
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag(){
+          dataLayer.push(arguments);
+        }
+
+        gtag("js", new Date());
+
+        gtag("config", "${GA_ID}", {
+          anonymize_ip: true
+        });
       `;
 
       document.head.appendChild(s2);
     }
   }, []);
+
+  /* =======================================================
+     TOOL CLICK ANALYTICS
+  ======================================================= */
 
   useEffect(() => {
     const track = (event) => {
@@ -436,18 +538,34 @@ function App() {
       }
     };
 
-    window.addEventListener("swapclone-tool-click", track);
+    window.addEventListener(
+      "swapclone-tool-click",
+      track
+    );
 
     return () => {
-      window.removeEventListener("swapclone-tool-click", track);
+      window.removeEventListener(
+        "swapclone-tool-click",
+        track
+      );
     };
   }, []);
 
+  /* =======================================================
+     KEYBOARD SHORTCUTS
+  ======================================================= */
+
   useEffect(() => {
     const onKey = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.key.toLowerCase() === "k"
+      ) {
         e.preventDefault();
-        document.querySelector(".hero-search input")?.focus();
+
+        document
+          .querySelector(".hero-search input")
+          ?.focus();
       }
 
       if (e.key === "Escape") {
@@ -457,8 +575,14 @@ function App() {
 
     document.addEventListener("keydown", onKey);
 
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
+
+  /* =======================================================
+     SEARCH
+  ======================================================= */
 
   const visibleCategories = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -468,10 +592,16 @@ function App() {
         const catMatch =
           category.name.toLowerCase().includes(q) ||
           category.id.includes(q) ||
-          category.tags?.some((t) => t.includes(q));
+          category.tags?.some((t) =>
+            t.includes(q)
+          );
 
         const matchTool = (tool) =>
-          `${tool.name} ${tool.description} ${tool.tags?.join(" ") || ""}`
+          `${tool.name} ${
+            tool.description
+          } ${
+            tool.tags?.join(" ") || ""
+          }`
             .toLowerCase()
             .includes(q);
 
@@ -486,22 +616,31 @@ function App() {
             : category.freeAlternatives;
 
         if (filter === "free") {
-          free = free.filter((t) => t.status === "Free");
+          free = free.filter(
+            (t) => t.status === "Free"
+          );
         }
 
         if (filter === "open") {
-          free = free.filter((t) => t.status === "Open Source");
+          free = free.filter(
+            (t) => t.status === "Open Source"
+          );
         }
 
         if (filter === "tier") {
-          free = free.filter((t) => t.status === "Free Tier");
+          free = free.filter(
+            (t) => t.status === "Free Tier"
+          );
         }
 
         return {
           ...category,
           paidTools: paid,
           freeAlternatives: free,
-          hasResults: catMatch || paid.length > 0 || free.length > 0,
+          hasResults:
+            catMatch ||
+            paid.length > 0 ||
+            free.length > 0,
         };
       })
       .filter((c) => c.hasResults);
@@ -510,12 +649,21 @@ function App() {
   const shownCategories =
     active === "all"
       ? visibleCategories
-      : visibleCategories.filter((c) => c.id === active);
+      : visibleCategories.filter(
+          (c) => c.id === active
+        );
 
   const totalTools = categories.reduce(
-    (n, c) => n + c.paidTools.length + c.freeAlternatives.length,
+    (n, c) =>
+      n +
+      c.paidTools.length +
+      c.freeAlternatives.length,
     0
   );
+
+  /* =======================================================
+     CATEGORY NAVIGATION
+  ======================================================= */
 
   const chooseCategory = (id) => {
     setActive(id);
@@ -527,9 +675,16 @@ function App() {
     requestAnimationFrame(() => {
       document
         .getElementById(id)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
     });
   };
+
+  /* =======================================================
+     HOME
+  ======================================================= */
 
   const openHome = () => {
     setPage(null);
@@ -541,6 +696,10 @@ function App() {
       behavior: "smooth",
     });
   };
+
+  /* =======================================================
+     LEGAL PAGE
+  ======================================================= */
 
   if (page) {
     return (
@@ -554,12 +713,19 @@ function App() {
           chooseCategory={chooseCategory}
         />
 
-        <LegalPage type={page} onBack={openHome} />
+        <LegalPage
+          type={page}
+          onBack={openHome}
+        />
 
         <Footer setPage={setPage} />
       </div>
     );
   }
+
+  /* =======================================================
+     MAIN WEBSITE
+  ======================================================= */
 
   return (
     <div className="app">
@@ -573,9 +739,15 @@ function App() {
       />
 
       <main>
+
+        {/* =================================================
+            HERO
+        ================================================= */}
+
         <section className="hero">
           <div className="eyebrow">
-            <Icon name="sparkle" /> CURATED AI DIRECTORY
+            <Icon name="sparkle" />
+            CURATED AI DIRECTORY
           </div>
 
           <h1>
@@ -583,7 +755,8 @@ function App() {
           </h1>
 
           <p>
-            Find useful alternatives to the AI tools you normally pay for.
+            Find useful alternatives to the AI tools you
+            normally pay for.
           </p>
 
           <div className="hero-search">
@@ -591,7 +764,9 @@ function App() {
 
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) =>
+                setQuery(e.target.value)
+              }
               placeholder="Search ChatGPT, Midjourney, Photoshop..."
               autoComplete="off"
             />
@@ -600,37 +775,62 @@ function App() {
           </div>
 
           <div className="quick-links">
-            {categories.slice(0, 8).map((c, i) => (
-              <React.Fragment key={c.id}>
-                <button onClick={() => chooseCategory(c.id)}>
-                  {c.short}
-                </button>
+            {categories
+              .slice(0, 8)
+              .map((c, i) => (
+                <React.Fragment key={c.id}>
+                  <button
+                    onClick={() =>
+                      chooseCategory(c.id)
+                    }
+                  >
+                    {c.short}
+                  </button>
 
-                {i < 7 && <span>·</span>}
-              </React.Fragment>
-            ))}
+                  {i < 7 && <span>·</span>}
+                </React.Fragment>
+              ))}
           </div>
         </section>
 
+        {/* =================================================
+            TRUST
+        ================================================= */}
+
         <section className="trust-row">
           <span>DIRECT OFFICIAL LINKS</span>
-          <i></i>
+
+          <i />
+
           <span>NO ACCOUNT REQUIRED</span>
-          <i></i>
-          <span>FREE • OPEN SOURCE • FREE TIER</span>
+
+          <i />
+
+          <span>
+            FREE • OPEN SOURCE • FREE TIER
+          </span>
         </section>
+
+        {/* =================================================
+            QUICK SWAPS
+        ================================================= */}
 
         <section
           className="discovery-strip"
           aria-label="Popular AI swaps"
         >
           <div className="discovery-intro">
-            <span className="mini-label">QUICK SWAPS</span>
+            <span className="mini-label">
+              QUICK SWAPS
+            </span>
 
-            <h2>Popular paid → free swaps</h2>
+            <h2>
+              Popular paid → free swaps
+            </h2>
 
             <p>
-              Start with a familiar tool and jump straight to an alternative.
+              Start with a familiar tool and jump
+              straight to an alternative.
             </p>
           </div>
 
@@ -639,16 +839,24 @@ function App() {
               <button
                 className="swap-card"
                 key={swap.paid}
-                onClick={() => chooseCategory(swap.categoryId)}
+                onClick={() =>
+                  chooseCategory(
+                    swap.categoryId
+                  )
+                }
               >
                 <span className="swap-category">
                   {swap.category}
                 </span>
 
                 <span className="swap-line">
-                  <strong>{swap.paid}</strong>
+                  <strong>
+                    {swap.paid}
+                  </strong>
 
-                  <span className="swap-arrow">→</span>
+                  <span className="swap-arrow">
+                    →
+                  </span>
 
                   <strong className="free-name">
                     {swap.free}
@@ -659,36 +867,73 @@ function App() {
           </div>
         </section>
 
+        {/* =================================================
+            HILLTOP AD #1
+            TOP POSITION
+        ================================================= */}
+
+        <HilltopAd position="top" />
+
+        {/* =================================================
+            ADSENSE TOP
+        ================================================= */}
+
         <AdSlot slot={ADSENSE_SLOT_TOP} />
+
+        {/* =================================================
+            VALUE STRIP
+        ================================================= */}
 
         <section className="value-strip">
           <div>
-            <strong>{categories.length}+</strong>
+            <strong>
+              {categories.length}+
+            </strong>
+
             <span>categories</span>
           </div>
 
           <div>
-            <strong>{totalTools}+</strong>
+            <strong>
+              {totalTools}+
+            </strong>
+
             <span>tools listed</span>
           </div>
 
           <div>
             <strong>100%</strong>
+
             <span>direct links</span>
           </div>
 
           <div>
             <strong>0</strong>
+
             <span>signups required</span>
           </div>
         </section>
 
-        <section id="categories" className="directory">
+        {/* =================================================
+            DIRECTORY
+        ================================================= */}
+
+        <section
+          id="categories"
+          className="directory"
+        >
           <div className="filter-row">
+
             <div className="category-tabs">
               <button
-                className={active === "all" ? "active" : ""}
-                onClick={() => setActive("all")}
+                className={
+                  active === "all"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setActive("all")
+                }
               >
                 All
               </button>
@@ -696,8 +941,14 @@ function App() {
               {categories.map((c) => (
                 <button
                   key={c.id}
-                  className={active === c.id ? "active" : ""}
-                  onClick={() => chooseCategory(c.id)}
+                  className={
+                    active === c.id
+                      ? "active"
+                      : ""
+                  }
+                  onClick={() =>
+                    chooseCategory(c.id)
+                  }
                 >
                   {c.short}
                 </button>
@@ -706,44 +957,76 @@ function App() {
 
             <div className="status-filters">
               <button
-                className={filter === "all" ? "active" : ""}
-                onClick={() => setFilter("all")}
+                className={
+                  filter === "all"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setFilter("all")
+                }
               >
                 All
               </button>
 
               <button
-                className={filter === "free" ? "active" : ""}
-                onClick={() => setFilter("free")}
+                className={
+                  filter === "free"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setFilter("free")
+                }
               >
                 Free
               </button>
 
               <button
-                className={filter === "open" ? "active" : ""}
-                onClick={() => setFilter("open")}
+                className={
+                  filter === "open"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setFilter("open")
+                }
               >
                 Open Source
               </button>
 
               <button
-                className={filter === "tier" ? "active" : ""}
-                onClick={() => setFilter("tier")}
+                className={
+                  filter === "tier"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setFilter("tier")
+                }
               >
                 Free Tier
               </button>
             </div>
           </div>
 
+          {/* =================================================
+              EMPTY SEARCH
+          ================================================= */}
+
           {shownCategories.length === 0 ? (
             <div className="empty">
-              <div className="empty-icon">⌕</div>
+              <div className="empty-icon">
+                ⌕
+              </div>
 
-              <h3>No matching tools</h3>
+              <h3>
+                No matching tools
+              </h3>
 
               <p>
-                Try a tool name, category, or keyword like “image” or
-                “coding”.
+                Try a tool name, category, or
+                keyword like “image” or “coding”.
               </p>
 
               <button
@@ -757,106 +1040,169 @@ function App() {
               </button>
             </div>
           ) : (
-            shownCategories.map((category, index) => (
-              <React.Fragment key={category.id}>
-                <section
-                  className="category-section"
-                  id={category.id}
+            shownCategories.map(
+              (category, index) => (
+                <React.Fragment
+                  key={category.id}
                 >
-                  <div className="category-heading">
-                    <div className="category-title">
-                      <span className="category-icon">
-                        {category.icon}
+
+                  {/* =======================================
+                      CATEGORY
+                  ======================================= */}
+
+                  <section
+                    className="category-section"
+                    id={category.id}
+                  >
+                    <div className="category-heading">
+
+                      <div className="category-title">
+                        <span className="category-icon">
+                          {category.icon}
+                        </span>
+
+                        <div>
+                          <h2>
+                            {category.name}
+                          </h2>
+
+                          <p>
+                            {category.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="result-count">
+                        {category.paidTools.length +
+                          category
+                            .freeAlternatives
+                            .length}{" "}
+                        tools
                       </span>
-
-                      <div>
-                        <h2>{category.name}</h2>
-                        <p>{category.description}</p>
-                      </div>
                     </div>
 
-                    <span className="result-count">
-                      {category.paidTools.length +
-                        category.freeAlternatives.length}{" "}
-                      tools
-                    </span>
-                  </div>
+                    {/* =====================================
+                        PAID
+                    ===================================== */}
 
-                  {category.paidTools.length > 0 && (
-                    <div className="group paid-group">
-                      <div className="group-head">
-                        <div>
-                          <h3>Paid Tools</h3>
+                    {category.paidTools
+                      .length > 0 && (
+                      <div className="group paid-group">
 
-                          <p>
-                            Popular tools that normally require payment.
-                          </p>
+                        <div className="group-head">
+                          <div>
+                            <h3>
+                              Paid Tools
+                            </h3>
+
+                            <p>
+                              Popular tools that
+                              normally require
+                              payment.
+                            </p>
+                          </div>
+
+                          <span className="group-label">
+                            PAID
+                          </span>
                         </div>
 
-                        <span className="group-label">
-                          PAID
-                        </span>
+                        <div className="tool-grid">
+                          {category.paidTools.map(
+                            (t) => (
+                              <ToolCard
+                                key={t.name}
+                                tool={t}
+                                kind="paid"
+                                onOpen={
+                                  setSelectedTool
+                                }
+                              />
+                            )
+                          )}
+                        </div>
                       </div>
+                    )}
 
-                      <div className="tool-grid">
-                        {category.paidTools.map((t) => (
-                          <ToolCard
-                            key={t.name}
-                            tool={t}
-                            kind="paid"
-                            onOpen={setSelectedTool}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    {/* =====================================
+                        FREE
+                    ===================================== */}
 
-                  {category.freeAlternatives.length > 0 && (
-                    <div className="group free-group">
-                      <div className="group-head">
-                        <div>
-                          <h3>
-                            <span>✦</span> Free Alternatives
-                          </h3>
+                    {category
+                      .freeAlternatives
+                      .length > 0 && (
+                      <div className="group free-group">
 
-                          <p>
-                            Access level is labelled so you know what
-                            “free” means.
-                          </p>
+                        <div className="group-head">
+                          <div>
+                            <h3>
+                              <span>✦</span>{" "}
+                              Free Alternatives
+                            </h3>
+
+                            <p>
+                              Access level is
+                              labelled so you
+                              know what “free”
+                              means.
+                            </p>
+                          </div>
+
+                          <span className="group-label free-label">
+                            FREE OPTIONS
+                          </span>
                         </div>
 
-                        <span className="group-label free-label">
-                          FREE OPTIONS
-                        </span>
+                        <div className="tool-grid">
+                          {category
+                            .freeAlternatives
+                            .map((t) => (
+                              <ToolCard
+                                key={t.name}
+                                tool={t}
+                                kind="free"
+                                onOpen={
+                                  setSelectedTool
+                                }
+                              />
+                            ))}
+                        </div>
                       </div>
+                    )}
+                  </section>
 
-                      <div className="tool-grid">
-                        {category.freeAlternatives.map((t) => (
-                          <ToolCard
-                            key={t.name}
-                            tool={t}
-                            kind="free"
-                            onOpen={setSelectedTool}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                  {/* =======================================
+                      HILLTOP AD #2
+                      AFTER THIRD CATEGORY
+                  ======================================= */}
+
+                  {index === 2 && (
+                    <HilltopAd position="middle" />
                   )}
-                </section>
 
-                {/* HilltopAds 300x250 after the third category */}
-                {index === 2 && <HilltopAd />}
+                  {/* =======================================
+                      ADSENSE MIDDLE
+                  ======================================= */}
 
-                {/* Existing AdSense middle placement */}
-                {index === 2 && (
-                  <AdSlot slot={ADSENSE_SLOT_MID} />
-                )}
-              </React.Fragment>
-            ))
+                  {index === 2 && (
+                    <AdSlot
+                      slot={ADSENSE_SLOT_MID}
+                    />
+                  )}
+                </React.Fragment>
+              )
+            )
           )}
         </section>
 
-        <section id="about" className="about">
+        {/* =================================================
+            ABOUT
+        ================================================= */}
+
+        <section
+          id="about"
+          className="about"
+        >
           <div>
             <span className="about-kicker">
               WHY SWAPCLONE AI
@@ -871,21 +1217,27 @@ function App() {
 
           <div className="about-copy">
             <p>
-              SwapClone AI is a curated directory built to make AI
-              discovery faster. Instead of searching through long
-              lists, visitors can compare familiar paid tools with
-              free, open-source and free-tier alternatives in one
-              place.
+              SwapClone AI is a curated directory
+              built to make AI discovery faster.
+              Instead of searching through long
+              lists, visitors can compare familiar
+              paid tools with free, open-source and
+              free-tier alternatives in one place.
             </p>
 
             <p>
-              We link directly to official tool websites. Pricing,
-              limits and availability can change, so verify current
-              details on the provider's website before signing up or
-              paying.
+              We link directly to official tool
+              websites. Pricing, limits and
+              availability can change, so verify
+              current details on the provider's
+              website before signing up or paying.
             </p>
           </div>
         </section>
+
+        {/* =================================================
+            HOW TO USE
+        ================================================= */}
 
         <section className="editorial-section">
           <div>
@@ -894,52 +1246,84 @@ function App() {
             </span>
 
             <h2>
-              Find → compare → <em>create.</em>
+              Find → compare →{" "}
+              <em>create.</em>
             </h2>
           </div>
 
           <div className="editorial-steps">
+
             <article>
               <b>01</b>
 
-              <h3>Search a tool</h3>
+              <h3>
+                Search a tool
+              </h3>
 
               <p>
-                Type a name such as ChatGPT, Midjourney or Copilot.
+                Type a name such as ChatGPT,
+                Midjourney or Copilot.
               </p>
             </article>
 
             <article>
               <b>02</b>
 
-              <h3>Check the access level</h3>
+              <h3>
+                Check the access level
+              </h3>
 
               <p>
-                Use Free, Open Source or Free Tier labels to
-                understand the listing.
+                Use Free, Open Source or
+                Free Tier labels to understand
+                the listing.
               </p>
             </article>
 
             <article>
               <b>03</b>
 
-              <h3>Open the official site</h3>
+              <h3>
+                Open the official site
+              </h3>
 
               <p>
-                Use the direct button to visit the provider and
-                verify current pricing.
+                Use the direct button to visit
+                the provider and verify current
+                pricing.
               </p>
             </article>
+
           </div>
         </section>
 
-        <AdSlot slot={ADSENSE_SLOT_BOTTOM} />
+        {/* =================================================
+            HILLTOP AD #3
+            BOTTOM POSITION
+        ================================================= */}
+
+        <HilltopAd position="bottom" />
+
+        {/* =================================================
+            ADSENSE BOTTOM
+        ================================================= */}
+
+        <AdSlot
+          slot={ADSENSE_SLOT_BOTTOM}
+        />
+
       </main>
+
+      {/* ===================================================
+          TOOL MODAL
+      =================================================== */}
 
       {selectedTool && (
         <ToolModal
           tool={selectedTool}
-          onClose={() => setSelectedTool(null)}
+          onClose={() =>
+            setSelectedTool(null)
+          }
         />
       )}
 
@@ -947,6 +1331,10 @@ function App() {
     </div>
   );
 }
+
+/* =========================================================
+   HEADER
+========================================================= */
 
 function Header({
   query,
@@ -959,6 +1347,7 @@ function Header({
   return (
     <>
       <header className="site-header">
+
         <a
           className="brand"
           href="#"
@@ -1009,7 +1398,9 @@ function Header({
 
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) =>
+              setQuery(e.target.value)
+            }
             placeholder="Search AI tools..."
             aria-label="Search AI tools"
           />
@@ -1017,7 +1408,9 @@ function Header({
           {query && (
             <button
               className="clear-search"
-              onClick={() => setQuery("")}
+              onClick={() =>
+                setQuery("")
+              }
             >
               ×
             </button>
@@ -1026,15 +1419,24 @@ function Header({
 
         <button
           className="menu-button"
-          onClick={() => setMenuOpen((v) => !v)}
+          onClick={() =>
+            setMenuOpen((v) => !v)
+          }
           aria-label="Menu"
         >
-          <Icon name={menuOpen ? "close" : "menu"} />
+          <Icon
+            name={
+              menuOpen
+                ? "close"
+                : "menu"
+            }
+          />
         </button>
       </header>
 
       {menuOpen && (
         <div className="mobile-menu">
+
           <button
             onClick={() => {
               setMenuOpen(false);
@@ -1062,11 +1464,16 @@ function Header({
           >
             About
           </button>
+
         </div>
       )}
     </>
   );
 }
+
+/* =========================================================
+   TOOL MODAL
+========================================================= */
 
 function ToolModal({ tool, onClose }) {
   const isFree = !!tool.status;
@@ -1075,7 +1482,8 @@ function ToolModal({ tool, onClose }) {
     <div
       className="modal-backdrop"
       onMouseDown={(e) =>
-        e.target === e.currentTarget && onClose()
+        e.target === e.currentTarget &&
+        onClose()
       }
     >
       <div
@@ -1084,6 +1492,7 @@ function ToolModal({ tool, onClose }) {
         aria-modal="true"
         aria-label={`${tool.name} details`}
       >
+
         <button
           className="modal-close"
           onClick={onClose}
@@ -1097,41 +1506,56 @@ function ToolModal({ tool, onClose }) {
 
           <div>
             <span className="mini-label">
-              {isFree ? tool.status : "PAID TOOL"}
+              {isFree
+                ? tool.status
+                : "PAID TOOL"}
             </span>
 
             <h2>{tool.name}</h2>
 
-            <p>{tool.description}</p>
+            <p>
+              {tool.description}
+            </p>
           </div>
         </div>
 
         <div className="modal-grid">
+
           <div>
             <span>ACCESS</span>
 
             <strong>
-              {isFree ? tool.status : tool.pricing}
+              {isFree
+                ? tool.status
+                : tool.pricing}
             </strong>
           </div>
 
           <div>
-            <span>CATEGORY TAGS</span>
+            <span>
+              CATEGORY TAGS
+            </span>
 
             <strong>
-              {tool.tags?.slice(0, 3).join(" • ") ||
+              {tool.tags
+                ?.slice(0, 3)
+                .join(" • ") ||
                 "AI tool"}
             </strong>
           </div>
+
         </div>
 
         <div className="modal-note">
-          <b>Before you use it</b>
+          <b>
+            Before you use it
+          </b>
 
           <p>
-            Pricing, limits, features and availability can
-            change. Check the provider's official website for the
-            latest details.
+            Pricing, limits, features
+            and availability can change.
+            Check the provider's official
+            website for the latest details.
           </p>
         </div>
 
@@ -1142,16 +1566,24 @@ function ToolModal({ tool, onClose }) {
           rel="noopener noreferrer"
           onClick={() =>
             window.dispatchEvent(
-              new CustomEvent("swapclone-tool-click", {
-                detail: {
-                  name: tool.name,
-                  kind: isFree ? "free" : "paid",
-                },
-              })
+              new CustomEvent(
+                "swapclone-tool-click",
+                {
+                  detail: {
+                    name: tool.name,
+                    kind: isFree
+                      ? "free"
+                      : "paid",
+                  },
+                }
+              )
             )
           }
         >
-          {isFree ? "Use Free" : "Visit Official Site"}{" "}
+          {isFree
+            ? "Use Free"
+            : "Visit Official Site"}
+
           <Icon name="external" />
         </a>
       </div>
@@ -1159,11 +1591,19 @@ function ToolModal({ tool, onClose }) {
   );
 }
 
+/* =========================================================
+   FOOTER
+========================================================= */
+
 function Footer({ setPage }) {
   return (
     <footer className="footer">
+
       <div className="footer-brand">
-        <img src="/swapclone-logo-transparent.png" alt="" />
+        <img
+          src="/swapclone-logo-transparent.png"
+          alt=""
+        />
 
         <div>
           <strong>
@@ -1171,30 +1611,48 @@ function Footer({ setPage }) {
           </strong>
 
           <span>
-            Free alternatives to popular paid AI tools.
+            Free alternatives to popular paid AI
+            tools.
           </span>
         </div>
       </div>
 
       <div className="footer-links">
-        <a href="#categories">Categories</a>
 
-        <a href="/about.html">About</a>
+        <a href="#categories">
+          Categories
+        </a>
+
+        <a href="/about.html">
+          About
+        </a>
 
         <a href="mailto:hello@swapclone.ai?subject=Submit%20a%20Tool">
           Submit a Tool
         </a>
 
-        <a href="/privacy.html">Privacy</a>
+        <a href="/privacy.html">
+          Privacy
+        </a>
 
-        <a href="/terms.html">Terms</a>
+        <a href="/terms.html">
+          Terms
+        </a>
+
       </div>
 
       <span className="copyright">
         © 2026 SwapClone AI
       </span>
+
     </footer>
   );
 }
 
-createRoot(document.getElementById("root")).render(<App />);
+/* =========================================================
+   RENDER
+========================================================= */
+
+createRoot(
+  document.getElementById("root")
+).render(<App />);
