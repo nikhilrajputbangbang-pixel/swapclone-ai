@@ -149,6 +149,9 @@ function AdSlot({ slot, label = "Advertisement" }) {
 /*
   HilltopAds Zone #7452441
   Format: MultiTag Banner 300x250
+
+  IMPORTANT:
+  This uses the latest HilltopAds script supplied by the user.
 */
 function HilltopAd() {
   useEffect(() => {
@@ -156,6 +159,7 @@ function HilltopAd() {
 
     if (!container) return;
 
+    // Prevent duplicate scripts when React re-renders.
     container.innerHTML = "";
 
     const script = document.createElement("script");
@@ -164,15 +168,17 @@ function HilltopAd() {
     script.referrerPolicy = "no-referrer-when-downgrade";
 
     script.text = `
-      (function(eora){
+      (function(tnid){
         var d = document,
             s = d.createElement('script'),
             l = d.currentScript || d.scripts[d.scripts.length - 1];
 
-        s.settings = eora || {};
-        s.src = "//peacefulbicycle.com/brXyVnsVd.GJlL0JYvW/cF/CeomM9PuzZ_Ual/kGPtTLcd0mNuT/IO0MNSDfEvtRN_zVQZ1M/joQx0nNuQk";
+        s.settings = tnid || {};
+
+        s.src = "//peacefulbicycle.com/bOX/V.sQd/GclE0-YDWOcH/re/mN9/u_ZwUjlGk_PGTScm0HNGTFI/0dNdDLEwtGNCzAQ/1OM/jxQM0ZNoQv";
+
         s.async = true;
-        s.referrerPolicy = "no-referrer-when-downgrade";
+        s.referrerPolicy = 'no-referrer-when-downgrade';
 
         l.parentNode.insertBefore(s, l);
       })({})
@@ -495,8 +501,7 @@ function App() {
           ...category,
           paidTools: paid,
           freeAlternatives: free,
-          hasResults:
-            catMatch || paid.length > 0 || free.length > 0,
+          hasResults: catMatch || paid.length > 0 || free.length > 0,
         };
       })
       .filter((c) => c.hasResults);
@@ -530,6 +535,7 @@ function App() {
     setPage(null);
     setActive("all");
     setQuery("");
+
     window.scrollTo({
       top: 0,
       behavior: "smooth",
@@ -781,6 +787,7 @@ function App() {
                       <div className="group-head">
                         <div>
                           <h3>Paid Tools</h3>
+
                           <p>
                             Popular tools that normally require payment.
                           </p>
