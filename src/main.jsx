@@ -17,57 +17,141 @@ const GA_ID = import.meta.env.VITE_GA_ID || "";
 
 /* =========================================================
    HILLTOPADS
-   Zone: 7452441
-   Format: MultiTag Banner 300x250
-
-   Same approved HilltopAds zone is placed in 3 positions.
 ========================================================= */
 
-const HILLTOP_SCRIPT =
-  "(function(tnid){var d=document,s=d.createElement('script'),l=d.currentScript||d.scripts[d.scripts.length-1];s.settings=tnid||{};s.src='//peacefulbicycle.com/bOX/V.sQd/GclE0-YDWOcH/re/mN9/u_ZwUjlGk_PGTScm0HNGTFI/0dNdDLEwtGNCzAQ/1OM/jxQM0ZNoQv';s.async=true;s.referrerPolicy='no-referrer-when-downgrade';l.parentNode.insertBefore(s,l);})({})";
+/*
+   TOP BANNER
+   Existing approved HilltopAds zone
+*/
 
+const HILLTOP_TOP_SCRIPT = `
+(function(tnid){
+var d=document,
+s=d.createElement('script'),
+l=d.currentScript || d.scripts[d.scripts.length-1];
+
+s.settings=tnid||{};
+
+s.src='//peacefulbicycle.com/bOX/V.sQd/GclE0-YDWOcH/re/mN9/u_ZwUjlGk_PGTScm0HNGTFI/0dNdDLEwtGNCzAQ/1OM/jxQM0ZNoQv';
+
+s.async=true;
+s.referrerPolicy='no-referrer-when-downgrade';
+
+l.parentNode.insertBefore(s,l);
+})({});
+`;
+
+
+/*
+   MIDDLE BANNER
+   New HilltopAds code supplied by user
+*/
+
+const HILLTOP_MIDDLE_SCRIPT = `
+(function(cpvf){
+var d = document,
+s = d.createElement('script'),
+l = d.currentScript || d.scripts[d.scripts.length - 1];
+
+s.settings = cpvf || {};
+
+s.src = "//peacefulbicycle.com/bAX/V.sjdXGel/0hYzWfcm/-eWmb9wumZiUMl/kQPhT_cb0FN-T/IE3SMYDHUEt/NvzuQp1KMbjpcGwVOUQR";
+
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+
+l.parentNode.insertBefore(s, l);
+})({})
+`;
+
+
+/*
+   BOTTOM BANNER
+   New HilltopAds code supplied by user
+*/
+
+const HILLTOP_BOTTOM_SCRIPT = `
+(function(mh){
+var d = document,
+s = d.createElement('script'),
+l = d.currentScript || d.scripts[d.scripts.length - 1];
+
+s.settings = mh || {};
+
+s.src = "//peacefulbicycle.com/bxXOV.sVdBGUlG0/YXWJcI/meMmS9/ukZVUclBkMPITbc/0aNGTEIW3wMbj-k/tLNVzaQP1/MMjPcBzFMMwr";
+
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+
+l.parentNode.insertBefore(s, l);
+})({})
+`;
+
+
+/* =========================================================
+   HILLTOP AD COMPONENT
+========================================================= */
 
 function HilltopAd({ position }) {
-  const id = `hilltop-ad-7452441-${position}`;
+  const id = `hilltop-ad-${position}`;
 
   useEffect(() => {
     const container = document.getElementById(id);
 
     if (!container) return;
 
-    /* Don't load twice */
+    /*
+      Prevent duplicate loading.
+    */
     if (container.dataset.loaded === "true") {
       return;
     }
 
     container.dataset.loaded = "true";
 
+    let scriptCode = "";
+
+    if (position === "top") {
+      scriptCode = HILLTOP_TOP_SCRIPT;
+    }
+
+    if (position === "middle") {
+      scriptCode = HILLTOP_MIDDLE_SCRIPT;
+    }
+
+    if (position === "bottom") {
+      scriptCode = HILLTOP_BOTTOM_SCRIPT;
+    }
+
+    if (!scriptCode) return;
+
     const script = document.createElement("script");
 
+    script.type = "text/javascript";
     script.async = true;
     script.referrerPolicy = "no-referrer-when-downgrade";
 
-    script.text = HILLTOP_SCRIPT;
+    script.text = scriptCode;
 
     container.appendChild(script);
 
     return () => {
       /*
-        Don't remove the container aggressively because
-        Hilltop's external script may still be working.
+        Intentionally don't remove Hilltop script.
       */
     };
-  }, [id]);
+  }, [id, position]);
 
   return (
     <div
       id={id}
-      className="hilltop-ad-slot"
+      className={`hilltop-ad-slot hilltop-${position}`}
       data-position={position}
       aria-label="Advertisement"
     />
   );
 }
+
 
 /* =========================================================
    ADSENSE COMPONENT
@@ -129,12 +213,14 @@ function AdSlot({ slot, label = "Advertisement" }) {
   );
 }
 
+
 /* =========================================================
    LOGO
 ========================================================= */
 
 const logoUrl = (domain) =>
   `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+
 
 /* =========================================================
    FEATURED SWAPS
@@ -178,6 +264,7 @@ const featuredSwaps = [
     categoryId: "video-editing",
   },
 ];
+
 
 /* =========================================================
    ICONS
@@ -229,6 +316,7 @@ function Icon({ name }) {
   return <span className="svg-icon">{icons[name]}</span>;
 }
 
+
 /* =========================================================
    TOOL LOGO
 ========================================================= */
@@ -256,6 +344,7 @@ function ToolLogo({ tool }) {
   );
 }
 
+
 /* =========================================================
    TOOL CARD
 ========================================================= */
@@ -264,7 +353,11 @@ function ToolCard({ tool, kind, onOpen }) {
   const isFree = kind === "free";
 
   return (
-    <article className={`tool-card ${isFree ? "free-card" : ""}`}>
+    <article
+      className={`tool-card ${
+        isFree ? "free-card" : ""
+      }`}
+    >
       <button
         className="tool-main"
         onClick={() => onOpen(tool, kind)}
@@ -296,7 +389,9 @@ function ToolCard({ tool, kind, onOpen }) {
               {tool.status}
             </span>
           ) : (
-            <span className="price">{tool.pricing}</span>
+            <span className="price">
+              {tool.pricing}
+            </span>
           )}
 
           <span className="details-link">
@@ -312,12 +407,15 @@ function ToolCard({ tool, kind, onOpen }) {
         rel="noopener noreferrer"
         onClick={() =>
           window.dispatchEvent(
-            new CustomEvent("swapclone-tool-click", {
-              detail: {
-                name: tool.name,
-                kind,
-              },
-            })
+            new CustomEvent(
+              "swapclone-tool-click",
+              {
+                detail: {
+                  name: tool.name,
+                  kind,
+                },
+              }
+            )
           )
         }
       >
@@ -328,6 +426,7 @@ function ToolCard({ tool, kind, onOpen }) {
     </article>
   );
 }
+
 
 /* =========================================================
    LEGAL PAGE
@@ -342,8 +441,9 @@ function LegalPage({ type, onBack }) {
       body: (
         <>
           <p>
-            SwapClone AI is a discovery directory. We do not require
-            an account to browse the directory or open listed tools.
+            SwapClone AI is a discovery directory. We do not
+            require an account to browse the directory or open
+            listed tools.
           </p>
 
           <h3>Information we may collect</h3>
@@ -351,16 +451,16 @@ function LegalPage({ type, onBack }) {
           <p>
             Basic technical information may be processed by our
             hosting, analytics, security and advertising providers.
-            This can include pages viewed, approximate device/browser
-            information, referral source and aggregated usage
-            information.
+            This can include pages viewed, approximate
+            device/browser information, referral source and
+            aggregated usage information.
           </p>
 
           <h3>Analytics and advertising</h3>
 
           <p>
-            If analytics or advertising services are enabled, those
-            providers may use cookies or similar technologies
+            If analytics or advertising services are enabled,
+            those providers may use cookies or similar technologies
             according to their own policies. Advertising may be
             personalized where permitted and consent requirements
             apply.
@@ -370,8 +470,8 @@ function LegalPage({ type, onBack }) {
 
           <p>
             Tool cards link directly to third-party websites.
-            SwapClone AI does not control those sites, their privacy
-            practices, pricing, availability or content.
+            SwapClone AI does not control those sites, their
+            privacy practices, pricing, availability or content.
           </p>
 
           <h3>Contact</h3>
@@ -410,16 +510,16 @@ function LegalPage({ type, onBack }) {
           <h3>Third-party links</h3>
 
           <p>
-            External links lead to third-party services. SwapClone
-            AI is not responsible for third-party websites,
-            products, content, outages or policies.
+            External links lead to third-party services.
+            SwapClone AI is not responsible for third-party
+            websites, products, content, outages or policies.
           </p>
 
           <h3>Changes</h3>
 
           <p>
-            We may update the directory, remove outdated entries or
-            change these terms as the website develops.
+            We may update the directory, remove outdated entries
+            or change these terms as the website develops.
           </p>
 
           <h3>Contact</h3>
@@ -440,18 +540,26 @@ function LegalPage({ type, onBack }) {
 
   return (
     <main className="legal-page">
-      <button className="back-link" onClick={onBack}>
+      <button
+        className="back-link"
+        onClick={onBack}
+      >
         ← Back to directory
       </button>
 
-      <span className="about-kicker">{page.kicker}</span>
+      <span className="about-kicker">
+        {page.kicker}
+      </span>
 
       <h1>{page.title}</h1>
 
-      <div className="legal-copy">{page.body}</div>
+      <div className="legal-copy">
+        {page.body}
+      </div>
     </main>
   );
 }
+
 
 /* =========================================================
    MAIN APP
@@ -462,8 +570,10 @@ function App() {
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedTool, setSelectedTool] = useState(null);
+  const [selectedTool, setSelectedTool] =
+    useState(null);
   const [page, setPage] = useState(null);
+
 
   /* =======================================================
      ADSENSE + GOOGLE ANALYTICS
@@ -476,7 +586,8 @@ function App() {
       const scriptId = "swapclone-adsense";
 
       if (!document.getElementById(scriptId)) {
-        const script = document.createElement("script");
+        const script =
+          document.createElement("script");
 
         script.id = scriptId;
         script.async = true;
@@ -489,10 +600,15 @@ function App() {
       }
     }
 
+
     /* ---------------- GOOGLE ANALYTICS ---------------- */
 
-    if (GA_ID && !document.getElementById("swapclone-ga")) {
-      const s1 = document.createElement("script");
+    if (
+      GA_ID &&
+      !document.getElementById("swapclone-ga")
+    ) {
+      const s1 =
+        document.createElement("script");
 
       s1.id = "swapclone-ga";
       s1.async = true;
@@ -502,7 +618,8 @@ function App() {
 
       document.head.appendChild(s1);
 
-      const s2 = document.createElement("script");
+      const s2 =
+        document.createElement("script");
 
       s2.id = "swapclone-ga-config";
 
@@ -524,6 +641,7 @@ function App() {
     }
   }, []);
 
+
   /* =======================================================
      TOOL CLICK ANALYTICS
   ======================================================= */
@@ -531,10 +649,14 @@ function App() {
   useEffect(() => {
     const track = (event) => {
       if (window.gtag) {
-        window.gtag("event", "tool_click", {
-          tool_name: event.detail.name,
-          tool_type: event.detail.kind,
-        });
+        window.gtag(
+          "event",
+          "tool_click",
+          {
+            tool_name: event.detail.name,
+            tool_type: event.detail.kind,
+          }
+        );
       }
     };
 
@@ -550,6 +672,7 @@ function App() {
       );
     };
   }, []);
+
 
   /* =======================================================
      KEYBOARD SHORTCUTS
@@ -573,12 +696,19 @@ function App() {
       }
     };
 
-    document.addEventListener("keydown", onKey);
+    document.addEventListener(
+      "keydown",
+      onKey
+    );
 
     return () => {
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener(
+        "keydown",
+        onKey
+      );
     };
   }, []);
+
 
   /* =======================================================
      SEARCH
@@ -590,7 +720,9 @@ function App() {
     return categories
       .map((category) => {
         const catMatch =
-          category.name.toLowerCase().includes(q) ||
+          category.name
+            .toLowerCase()
+            .includes(q) ||
           category.id.includes(q) ||
           category.tags?.some((t) =>
             t.includes(q)
@@ -607,12 +739,16 @@ function App() {
 
         let paid =
           q && !catMatch
-            ? category.paidTools.filter(matchTool)
+            ? category.paidTools.filter(
+                matchTool
+              )
             : category.paidTools;
 
         let free =
           q && !catMatch
-            ? category.freeAlternatives.filter(matchTool)
+            ? category.freeAlternatives.filter(
+                matchTool
+              )
             : category.freeAlternatives;
 
         if (filter === "free") {
@@ -623,13 +759,17 @@ function App() {
 
         if (filter === "open") {
           free = free.filter(
-            (t) => t.status === "Open Source"
+            (t) =>
+              t.status ===
+              "Open Source"
           );
         }
 
         if (filter === "tier") {
           free = free.filter(
-            (t) => t.status === "Free Tier"
+            (t) =>
+              t.status ===
+              "Free Tier"
           );
         }
 
@@ -643,8 +783,11 @@ function App() {
             free.length > 0,
         };
       })
-      .filter((c) => c.hasResults);
+      .filter(
+        (c) => c.hasResults
+      );
   }, [query, filter]);
+
 
   const shownCategories =
     active === "all"
@@ -653,13 +796,16 @@ function App() {
           (c) => c.id === active
         );
 
-  const totalTools = categories.reduce(
-    (n, c) =>
-      n +
-      c.paidTools.length +
-      c.freeAlternatives.length,
-    0
-  );
+
+  const totalTools =
+    categories.reduce(
+      (n, c) =>
+        n +
+        c.paidTools.length +
+        c.freeAlternatives.length,
+      0
+    );
+
 
   /* =======================================================
      CATEGORY NAVIGATION
@@ -682,6 +828,7 @@ function App() {
     });
   };
 
+
   /* =======================================================
      HOME
   ======================================================= */
@@ -696,6 +843,7 @@ function App() {
       behavior: "smooth",
     });
   };
+
 
   /* =======================================================
      LEGAL PAGE
@@ -718,10 +866,13 @@ function App() {
           onBack={openHome}
         />
 
-        <Footer setPage={setPage} />
+        <Footer
+          setPage={setPage}
+        />
       </div>
     );
   }
+
 
   /* =======================================================
      MAIN WEBSITE
@@ -729,6 +880,7 @@ function App() {
 
   return (
     <div className="app">
+
       <Header
         query={query}
         setQuery={setQuery}
@@ -745,6 +897,7 @@ function App() {
         ================================================= */}
 
         <section className="hero">
+
           <div className="eyebrow">
             <Icon name="sparkle" />
             CURATED AI DIRECTORY
@@ -755,61 +908,84 @@ function App() {
           </h1>
 
           <p>
-            Find useful alternatives to the AI tools you
-            normally pay for.
+            Find useful alternatives to the AI tools
+            you normally pay for.
           </p>
 
           <div className="hero-search">
+
             <Icon name="search" />
 
             <input
               value={query}
               onChange={(e) =>
-                setQuery(e.target.value)
+                setQuery(
+                  e.target.value
+                )
               }
               placeholder="Search ChatGPT, Midjourney, Photoshop..."
               autoComplete="off"
             />
 
             <kbd>⌘ K</kbd>
+
           </div>
 
           <div className="quick-links">
+
             {categories
               .slice(0, 8)
               .map((c, i) => (
-                <React.Fragment key={c.id}>
+                <React.Fragment
+                  key={c.id}
+                >
+
                   <button
                     onClick={() =>
-                      chooseCategory(c.id)
+                      chooseCategory(
+                        c.id
+                      )
                     }
                   >
                     {c.short}
                   </button>
 
-                  {i < 7 && <span>·</span>}
+                  {i < 7 && (
+                    <span>·</span>
+                  )}
+
                 </React.Fragment>
               ))}
+
           </div>
+
         </section>
+
 
         {/* =================================================
             TRUST
         ================================================= */}
 
         <section className="trust-row">
-          <span>DIRECT OFFICIAL LINKS</span>
+
+          <span>
+            DIRECT OFFICIAL LINKS
+          </span>
 
           <i />
 
-          <span>NO ACCOUNT REQUIRED</span>
+          <span>
+            NO ACCOUNT REQUIRED
+          </span>
 
           <i />
 
           <span>
             FREE • OPEN SOURCE • FREE TIER
           </span>
+
         </section>
+
 
         {/* =================================================
             QUICK SWAPS
@@ -819,7 +995,9 @@ function App() {
           className="discovery-strip"
           aria-label="Popular AI swaps"
         >
+
           <div className="discovery-intro">
+
             <span className="mini-label">
               QUICK SWAPS
             </span>
@@ -832,65 +1010,85 @@ function App() {
               Start with a familiar tool and jump
               straight to an alternative.
             </p>
+
           </div>
+
 
           <div className="swap-grid">
-            {featuredSwaps.map((swap) => (
-              <button
-                className="swap-card"
-                key={swap.paid}
-                onClick={() =>
-                  chooseCategory(
-                    swap.categoryId
-                  )
-                }
-              >
-                <span className="swap-category">
-                  {swap.category}
-                </span>
 
-                <span className="swap-line">
-                  <strong>
-                    {swap.paid}
-                  </strong>
+            {featuredSwaps.map(
+              (swap) => (
+                <button
+                  className="swap-card"
+                  key={swap.paid}
+                  onClick={() =>
+                    chooseCategory(
+                      swap.categoryId
+                    )
+                  }
+                >
 
-                  <span className="swap-arrow">
-                    →
+                  <span className="swap-category">
+                    {swap.category}
                   </span>
 
-                  <strong className="free-name">
-                    {swap.free}
-                  </strong>
-                </span>
-              </button>
-            ))}
+                  <span className="swap-line">
+
+                    <strong>
+                      {swap.paid}
+                    </strong>
+
+                    <span className="swap-arrow">
+                      →
+                    </span>
+
+                    <strong className="free-name">
+                      {swap.free}
+                    </strong>
+
+                  </span>
+
+                </button>
+              )
+            )}
+
           </div>
+
         </section>
 
+
         {/* =================================================
-            HILLTOP AD #1
-            TOP POSITION
+            HILLTOP TOP
         ================================================= */}
 
-        <HilltopAd position="top" />
+        <HilltopAd
+          position="top"
+        />
+
 
         {/* =================================================
             ADSENSE TOP
         ================================================= */}
 
-        <AdSlot slot={ADSENSE_SLOT_TOP} />
+        <AdSlot
+          slot={ADSENSE_SLOT_TOP}
+        />
+
 
         {/* =================================================
             VALUE STRIP
         ================================================= */}
 
         <section className="value-strip">
+
           <div>
             <strong>
               {categories.length}+
             </strong>
 
-            <span>categories</span>
+            <span>
+              categories
+            </span>
           </div>
 
           <div>
@@ -898,21 +1096,33 @@ function App() {
               {totalTools}+
             </strong>
 
-            <span>tools listed</span>
+            <span>
+              tools listed
+            </span>
           </div>
 
           <div>
-            <strong>100%</strong>
+            <strong>
+              100%
+            </strong>
 
-            <span>direct links</span>
+            <span>
+              direct links
+            </span>
           </div>
 
           <div>
-            <strong>0</strong>
+            <strong>
+              0
+            </strong>
 
-            <span>signups required</span>
+            <span>
+              signups required
+            </span>
           </div>
+
         </section>
+
 
         {/* =================================================
             DIRECTORY
@@ -922,9 +1132,11 @@ function App() {
           id="categories"
           className="directory"
         >
+
           <div className="filter-row">
 
             <div className="category-tabs">
+
               <button
                 className={
                   active === "all"
@@ -938,24 +1150,31 @@ function App() {
                 All
               </button>
 
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  className={
-                    active === c.id
-                      ? "active"
-                      : ""
-                  }
-                  onClick={() =>
-                    chooseCategory(c.id)
-                  }
-                >
-                  {c.short}
-                </button>
-              ))}
+              {categories.map(
+                (c) => (
+                  <button
+                    key={c.id}
+                    className={
+                      active === c.id
+                        ? "active"
+                        : ""
+                    }
+                    onClick={() =>
+                      chooseCategory(
+                        c.id
+                      )
+                    }
+                  >
+                    {c.short}
+                  </button>
+                )
+              )}
+
             </div>
 
+
             <div className="status-filters">
+
               <button
                 className={
                   filter === "all"
@@ -1007,15 +1226,21 @@ function App() {
               >
                 Free Tier
               </button>
+
             </div>
+
           </div>
+
 
           {/* =================================================
               EMPTY SEARCH
           ================================================= */}
 
-          {shownCategories.length === 0 ? (
+          {shownCategories.length ===
+          0 ? (
+
             <div className="empty">
+
               <div className="empty-icon">
                 ⌕
               </div>
@@ -1025,8 +1250,9 @@ function App() {
               </h3>
 
               <p>
-                Try a tool name, category, or
-                keyword like “image” or “coding”.
+                Try a tool name, category,
+                or keyword like “image”
+                or “coding”.
               </p>
 
               <button
@@ -1038,10 +1264,14 @@ function App() {
               >
                 Clear search
               </button>
+
             </div>
+
           ) : (
+
             shownCategories.map(
               (category, index) => (
+
                 <React.Fragment
                   key={category.id}
                 >
@@ -1054,14 +1284,17 @@ function App() {
                     className="category-section"
                     id={category.id}
                   >
+
                     <div className="category-heading">
 
                       <div className="category-title">
+
                         <span className="category-icon">
                           {category.icon}
                         </span>
 
                         <div>
+
                           <h2>
                             {category.name}
                           </h2>
@@ -1069,7 +1302,9 @@ function App() {
                           <p>
                             {category.description}
                           </p>
+
                         </div>
+
                       </div>
 
                       <span className="result-count">
@@ -1079,7 +1314,9 @@ function App() {
                             .length}{" "}
                         tools
                       </span>
+
                     </div>
+
 
                     {/* =====================================
                         PAID
@@ -1087,10 +1324,13 @@ function App() {
 
                     {category.paidTools
                       .length > 0 && (
+
                       <div className="group paid-group">
 
                         <div className="group-head">
+
                           <div>
+
                             <h3>
                               Paid Tools
                             </h3>
@@ -1100,14 +1340,18 @@ function App() {
                               normally require
                               payment.
                             </p>
+
                           </div>
 
                           <span className="group-label">
                             PAID
                           </span>
+
                         </div>
 
+
                         <div className="tool-grid">
+
                           {category.paidTools.map(
                             (t) => (
                               <ToolCard
@@ -1120,9 +1364,12 @@ function App() {
                               />
                             )
                           )}
+
                         </div>
+
                       </div>
                     )}
+
 
                     {/* =====================================
                         FREE
@@ -1131,10 +1378,13 @@ function App() {
                     {category
                       .freeAlternatives
                       .length > 0 && (
+
                       <div className="group free-group">
 
                         <div className="group-head">
+
                           <div>
+
                             <h3>
                               <span>✦</span>{" "}
                               Free Alternatives
@@ -1146,17 +1396,22 @@ function App() {
                               know what “free”
                               means.
                             </p>
+
                           </div>
 
                           <span className="group-label free-label">
                             FREE OPTIONS
                           </span>
+
                         </div>
 
+
                         <div className="tool-grid">
+
                           {category
                             .freeAlternatives
                             .map((t) => (
+
                               <ToolCard
                                 key={t.name}
                                 tool={t}
@@ -1165,20 +1420,28 @@ function App() {
                                   setSelectedTool
                                 }
                               />
+
                             ))}
+
                         </div>
+
                       </div>
                     )}
+
                   </section>
 
+
                   {/* =======================================
-                      HILLTOP AD #2
+                      HILLTOP MIDDLE
                       AFTER THIRD CATEGORY
                   ======================================= */}
 
                   {index === 2 && (
-                    <HilltopAd position="middle" />
+                    <HilltopAd
+                      position="middle"
+                    />
                   )}
+
 
                   {/* =======================================
                       ADSENSE MIDDLE
@@ -1186,14 +1449,21 @@ function App() {
 
                   {index === 2 && (
                     <AdSlot
-                      slot={ADSENSE_SLOT_MID}
+                      slot={
+                        ADSENSE_SLOT_MID
+                      }
                     />
                   )}
+
                 </React.Fragment>
+
               )
             )
+
           )}
+
         </section>
+
 
         {/* =================================================
             ABOUT
@@ -1203,7 +1473,9 @@ function App() {
           id="about"
           className="about"
         >
+
           <div>
+
             <span className="about-kicker">
               WHY SWAPCLONE AI
             </span>
@@ -1211,11 +1483,16 @@ function App() {
             <h2>
               Less searching.
               <br />
-              <em>More creating.</em>
+              <em>
+                More creating.
+              </em>
             </h2>
+
           </div>
 
+
           <div className="about-copy">
+
             <p>
               SwapClone AI is a curated directory
               built to make AI discovery faster.
@@ -1232,15 +1509,20 @@ function App() {
               current details on the provider's
               website before signing up or paying.
             </p>
+
           </div>
+
         </section>
+
 
         {/* =================================================
             HOW TO USE
         ================================================= */}
 
         <section className="editorial-section">
+
           <div>
+
             <span className="about-kicker">
               HOW TO USE THE DIRECTORY
             </span>
@@ -1249,11 +1531,14 @@ function App() {
               Find → compare →{" "}
               <em>create.</em>
             </h2>
+
           </div>
+
 
           <div className="editorial-steps">
 
             <article>
+
               <b>01</b>
 
               <h3>
@@ -1264,9 +1549,12 @@ function App() {
                 Type a name such as ChatGPT,
                 Midjourney or Copilot.
               </p>
+
             </article>
 
+
             <article>
+
               <b>02</b>
 
               <h3>
@@ -1278,9 +1566,12 @@ function App() {
                 Free Tier labels to understand
                 the listing.
               </p>
+
             </article>
 
+
             <article>
+
               <b>03</b>
 
               <h3>
@@ -1292,17 +1583,22 @@ function App() {
                 the provider and verify current
                 pricing.
               </p>
+
             </article>
 
           </div>
+
         </section>
 
+
         {/* =================================================
-            HILLTOP AD #3
-            BOTTOM POSITION
+            HILLTOP BOTTOM
         ================================================= */}
 
-        <HilltopAd position="bottom" />
+        <HilltopAd
+          position="bottom"
+        />
+
 
         {/* =================================================
             ADSENSE BOTTOM
@@ -1313,6 +1609,7 @@ function App() {
         />
 
       </main>
+
 
       {/* ===================================================
           TOOL MODAL
@@ -1327,10 +1624,15 @@ function App() {
         />
       )}
 
-      <Footer setPage={setPage} />
+
+      <Footer
+        setPage={setPage}
+      />
+
     </div>
   );
 }
+
 
 /* =========================================================
    HEADER
@@ -1356,6 +1658,7 @@ function Header({
             openHome();
           }}
         >
+
           <img
             src="/swapclone-logo-transparent.png"
             alt="SwapClone AI"
@@ -1365,13 +1668,18 @@ function Header({
           <span>
             SwapClone <b>AI</b>
           </span>
+
         </a>
 
+
         <nav className="desktop-nav">
+
           <button
             onClick={() =>
               document
-                .getElementById("categories")
+                .getElementById(
+                  "categories"
+                )
                 ?.scrollIntoView({
                   behavior: "smooth",
                 })
@@ -1383,7 +1691,9 @@ function Header({
           <button
             onClick={() =>
               document
-                .getElementById("about")
+                .getElementById(
+                  "about"
+                )
                 ?.scrollIntoView({
                   behavior: "smooth",
                 })
@@ -1391,15 +1701,20 @@ function Header({
           >
             About
           </button>
+
         </nav>
 
+
         <div className="header-search">
+
           <Icon name="search" />
 
           <input
             value={query}
             onChange={(e) =>
-              setQuery(e.target.value)
+              setQuery(
+                e.target.value
+              )
             }
             placeholder="Search AI tools..."
             aria-label="Search AI tools"
@@ -1415,12 +1730,16 @@ function Header({
               ×
             </button>
           )}
+
         </div>
+
 
         <button
           className="menu-button"
           onClick={() =>
-            setMenuOpen((v) => !v)
+            setMenuOpen(
+              (v) => !v
+            )
           }
           aria-label="Menu"
         >
@@ -1432,9 +1751,12 @@ function Header({
             }
           />
         </button>
+
       </header>
 
+
       {menuOpen && (
+
         <div className="mobile-menu">
 
           <button
@@ -1442,7 +1764,9 @@ function Header({
               setMenuOpen(false);
 
               document
-                .getElementById("categories")
+                .getElementById(
+                  "categories"
+                )
                 ?.scrollIntoView({
                   behavior: "smooth",
                 });
@@ -1451,12 +1775,15 @@ function Header({
             Categories
           </button>
 
+
           <button
             onClick={() => {
               setMenuOpen(false);
 
               document
-                .getElementById("about")
+                .getElementById(
+                  "about"
+                )
                 ?.scrollIntoView({
                   behavior: "smooth",
                 });
@@ -1467,25 +1794,32 @@ function Header({
 
         </div>
       )}
+
     </>
   );
 }
+
 
 /* =========================================================
    TOOL MODAL
 ========================================================= */
 
-function ToolModal({ tool, onClose }) {
+function ToolModal({
+  tool,
+  onClose,
+}) {
   const isFree = !!tool.status;
 
   return (
     <div
       className="modal-backdrop"
       onMouseDown={(e) =>
-        e.target === e.currentTarget &&
+        e.target ===
+          e.currentTarget &&
         onClose()
       }
     >
+
       <div
         className="tool-modal"
         role="dialog"
@@ -1501,37 +1835,51 @@ function ToolModal({ tool, onClose }) {
           ×
         </button>
 
+
         <div className="modal-top">
+
           <ToolLogo tool={tool} />
 
           <div>
+
             <span className="mini-label">
               {isFree
                 ? tool.status
                 : "PAID TOOL"}
             </span>
 
-            <h2>{tool.name}</h2>
+            <h2>
+              {tool.name}
+            </h2>
 
             <p>
               {tool.description}
             </p>
+
           </div>
+
         </div>
+
 
         <div className="modal-grid">
 
           <div>
-            <span>ACCESS</span>
+
+            <span>
+              ACCESS
+            </span>
 
             <strong>
               {isFree
                 ? tool.status
                 : tool.pricing}
             </strong>
+
           </div>
 
+
           <div>
+
             <span>
               CATEGORY TAGS
             </span>
@@ -1542,11 +1890,14 @@ function ToolModal({ tool, onClose }) {
                 .join(" • ") ||
                 "AI tool"}
             </strong>
+
           </div>
 
         </div>
 
+
         <div className="modal-note">
+
           <b>
             Before you use it
           </b>
@@ -1557,7 +1908,9 @@ function ToolModal({ tool, onClose }) {
             Check the provider's official
             website for the latest details.
           </p>
+
         </div>
+
 
         <a
           className="modal-cta"
@@ -1585,37 +1938,48 @@ function ToolModal({ tool, onClose }) {
             : "Visit Official Site"}
 
           <Icon name="external" />
+
         </a>
+
       </div>
+
     </div>
   );
 }
+
 
 /* =========================================================
    FOOTER
 ========================================================= */
 
-function Footer({ setPage }) {
+function Footer({
+  setPage,
+}) {
   return (
     <footer className="footer">
 
       <div className="footer-brand">
+
         <img
           src="/swapclone-logo-transparent.png"
           alt=""
         />
 
         <div>
+
           <strong>
             SwapClone <b>AI</b>
           </strong>
 
           <span>
-            Free alternatives to popular paid AI
-            tools.
+            Free alternatives to popular paid
+            AI tools.
           </span>
+
         </div>
+
       </div>
+
 
       <div className="footer-links">
 
@@ -1641,6 +2005,7 @@ function Footer({ setPage }) {
 
       </div>
 
+
       <span className="copyright">
         © 2026 SwapClone AI
       </span>
@@ -1649,10 +2014,13 @@ function Footer({ setPage }) {
   );
 }
 
+
 /* =========================================================
    RENDER
 ========================================================= */
 
 createRoot(
   document.getElementById("root")
-).render(<App />);
+).render(
+  <App />
+);
